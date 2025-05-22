@@ -1,0 +1,4 @@
+pyautogui
+colorama
+pyqt5
+pyinstaller
