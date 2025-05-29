@@ -2,7 +2,8 @@ name: Build and Release JavaJiggle
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*'
 
 jobs:
   build-windows:
