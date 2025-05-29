@@ -3,21 +3,34 @@ name: Build and Release JavaJiggle
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # Example: v1.0.0
 
 jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: |
+
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install pyinstaller -r requirements.txt
-          pyinstaller --noconfirm --onefile --windowed --icon=assets/JavaJiggle.ico --version-file=version.txt --name=JavaJiggle gui.py
-      - uses: softprops/action-gh-release@v1
+
+      - name: Build Windows EXE
+        run: |
+          pyinstaller --noconfirm --onefile --windowed ^
+            --icon=assets/JavaJiggle.ico ^
+            --version-file=version.txt ^
+            --name=JavaJiggle gui.py
+
+      - name: Upload EXE to Release
+        uses: softprops/action-gh-release@v1
         with:
           files: dist/JavaJiggle.exe
         env:
@@ -26,16 +39,28 @@ jobs:
   build-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: |
+
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install pyinstaller -r requirements.txt
-          pyinstaller --noconfirm --windowed --name=JavaJiggle gui.py
-      - uses: softprops/action-gh-release@v1
+
+      - name: Build macOS App
+        run: |
+          pyinstaller --noconfirm --windowed \
+            --icon=assets/JavaJiggle.icns \
+            --name=JavaJiggle gui.py
+
+      - name: Upload .app to Release
+        uses: softprops/action-gh-release@v1
         with:
-          files: dist/JavaJiggle
+          files: dist/JavaJiggle.app
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
