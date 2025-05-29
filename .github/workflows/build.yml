@@ -1,0 +1,41 @@
+name: Build and Release JavaJiggle
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller -r requirements.txt
+          pyinstaller --noconfirm --onefile --windowed --icon=assets/JavaJiggle.ico --version-file=version.txt --name=JavaJiggle gui.py
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: dist/JavaJiggle.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller -r requirements.txt
+          pyinstaller --noconfirm --windowed --name=JavaJiggle gui.py
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: dist/JavaJiggle
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
