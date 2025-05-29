@@ -23,9 +23,9 @@ jobs:
 
       - name: Build Windows EXE
         run: |
-          pyinstaller --noconfirm --onefile --windowed ^
-            --icon=assets/JavaJiggle.ico ^
-            --version-file=version.txt ^
+          pyinstaller --noconfirm --onefile --windowed `
+            --icon=assets/JavaJiggle_icon.ico `
+            --version-file=version.txt `
             --name=JavaJiggle gui.py
 
       - name: Upload EXE to Release
@@ -54,7 +54,7 @@ jobs:
       - name: Build macOS App
         run: |
           pyinstaller --noconfirm --windowed \
-            --icon=assets/JavaJiggle.icns \
+            --icon=assets/JavaJiggle_icon.icns \
             --name=JavaJiggle gui.py
 
       - name: Upload .app to Release
