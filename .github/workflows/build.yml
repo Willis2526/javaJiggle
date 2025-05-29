@@ -2,8 +2,7 @@ name: Build and Release JavaJiggle
 
 on:
   push:
-    tags:
-      - 'v*'  # Example: v1.0.0
+    branches: [main]
 
 jobs:
   build-windows:
