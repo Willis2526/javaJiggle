@@ -1,14 +1,16 @@
+import signal
 import sys
 import time
 import threading
 import pyautogui
+import platform
 import ctypes
 import configparser
 import os
 
 from PyQt5.QtWidgets import (
     QSizePolicy,
-    QMainWindow, QMenuBar, QMenu, QAction,
+    QMainWindow, QAction,
     QApplication, QWidget, QLabel, QPushButton,
     QVBoxLayout, QComboBox, QSpinBox, QHBoxLayout, QLineEdit,
     QTextEdit, QMessageBox
@@ -16,7 +18,9 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon, QPixmap
 
-import resources_rc  # ensures embedded resources are available
+import resources_rc
+
+IS_WINDOWS = platform.system() == "Windows"
 
 TOGGLE_KEYS = {
     "capslock": 0x14,
@@ -24,21 +28,27 @@ TOGGLE_KEYS = {
     "scrolllock": 0x91,
 }
 
+
 def get_toggle_state(key):
+    if not IS_WINDOWS:
+        return None
     vk = TOGGLE_KEYS.get(key.lower())
     if vk is None:
         return None
     return bool(ctypes.windll.user32.GetKeyState(vk) & 0x0001)
 
+
 def set_toggle_state(key, desired_state):
-    if key.lower() not in TOGGLE_KEYS:
+    if not IS_WINDOWS or key.lower() not in TOGGLE_KEYS:
         return
     current = get_toggle_state(key)
     if current != desired_state:
         pyautogui.press(key)
 
+
 class OutputSignal(QObject):
     message = pyqtSignal(str)
+
 
 class JiggleThread(threading.Thread):
     def __init__(self, mode, key, interval, distance, key_frequency, signal):
@@ -83,13 +93,17 @@ class JiggleThread(threading.Thread):
                 self.signal.message.emit(msg)
             time.sleep(self.interval)
 
+
 class JiggleGUI(QMainWindow):
     def __init__(self):
         super().__init__()
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         self.setWindowTitle("JavaJiggle")
-        self.setWindowIcon(QIcon(":/assets/JavaJiggle_icon.ico"))  # uses embedded icon
+
+        icon_path = ":/assets/JavaJiggle_icon.icns" if platform.system() == "Darwin" else ":/assets/JavaJiggle_icon.ico"
+        self.setWindowIcon(QIcon(icon_path))
+
         self.setFixedSize(400, 500)
         self.setStyleSheet("""
             QWidget {
@@ -192,22 +206,28 @@ class JiggleGUI(QMainWindow):
 
     def init_ui(self):
         self.init_menu()
-        self.mode_combo = self.labeled_combo(self.layout, "Mode", ["keypress", "mouse", "hybrid"])
+        self.mode_combo = self.labeled_combo(
+            self.layout, "Mode", ["keypress", "mouse", "hybrid"])
         self.mode_combo.setCurrentText(self.settings.get("mode", "hybrid"))
 
-        self.key_input = self.labeled_input(self.layout, "Key", self.settings.get("key", "shift"))
+        self.key_input = self.labeled_input(
+            self.layout, "Key", self.settings.get("key", "shift"))
 
-        self.interval_spin = self.labeled_spinbox(self.layout, "Interval (seconds)", int(self.settings.get("interval", 2)), 1, 9999)
-        self.mouse_spin = self.labeled_spinbox(self.layout, "Mouse Distance (px)", int(self.settings.get("mousedistance", 1)), 1, 1000)
-        self.freq_spin = self.labeled_spinbox(self.layout, "Key Frequency (for hybrid)", int(self.settings.get("keyfrequency", 5)), 1, 1000)
+        self.interval_spin = self.labeled_spinbox(
+            self.layout, "Interval (seconds)", int(self.settings.get("interval", 2)), 1, 9999)
+        self.mouse_spin = self.labeled_spinbox(self.layout, "Mouse Distance (px)", int(
+            self.settings.get("mousedistance", 1)), 1, 1000)
+        self.freq_spin = self.labeled_spinbox(self.layout, "Key Frequency (for hybrid)", int(
+            self.settings.get("keyfrequency", 5)), 1, 1000)
 
         self.console_output = QTextEdit()
         self.console_output.setReadOnly(True)
         self.console_output.setMinimumHeight(120)
         self.console_output.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.console_output.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        self.console_output.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
-        
+        self.console_output.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.MinimumExpanding)
+
         self.layout.addWidget(QLabel("Console Output:"))
         self.layout.addWidget(self.console_output)
         self.console_output.setStyleSheet("margin-bottom: 30px;")
@@ -282,7 +302,9 @@ class JiggleGUI(QMainWindow):
     def show_about(self):
         box = QMessageBox(self)
         box.setWindowTitle("About JavaJiggle")
-        box.setWindowIcon(QIcon(":/assets/JavaJiggle_icon.ico"))
+        
+        icon_path = ":/assets/JavaJiggle_icon.icns" if platform.system() == "Darwin" else ":/assets/JavaJiggle_icon.ico"
+        box.setWindowIcon(QIcon(icon_path))
 
         # HTML with inline image and content
         box.setText("""
@@ -330,7 +352,8 @@ class JiggleGUI(QMainWindow):
         distance = self.mouse_spin.value()
         key_freq = self.freq_spin.value()
 
-        self.thread = JiggleThread(mode, key, interval, distance, key_freq, self.signal)
+        self.thread = JiggleThread(
+            mode, key, interval, distance, key_freq, self.signal)
         self.thread.start()
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
@@ -343,14 +366,18 @@ class JiggleGUI(QMainWindow):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
 
-import signal
 
 def handle_interrupt(signum, frame):
     QApplication.quit()
 
+
 if __name__ == "__main__":
-    signal.signal(signal.SIGINT, handle_interrupt)
+    try:
+        signal.signal(signal.SIGINT, handle_interrupt)
+    except AttributeError:
+        pass
     app = QApplication(sys.argv)
     window = JiggleGUI()
     window.show()
     sys.exit(app.exec_())
+

@@ -1,4 +1,6 @@
-pyautogui
-colorama
+pyautogui>=0.9.54
+colorama>=0.4.6
 pyqt5
 pyinstaller
+# Only installed on macOS runners
+pyobjc-framework-Quartz>=10.2; platform_system == "Darwin"
