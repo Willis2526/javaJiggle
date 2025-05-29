@@ -3,7 +3,10 @@ name: Build and Release JavaJiggle
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*'  # Example: v1.0.0
+
+permissions:
+  contents: write  # Required for creating GitHub Releases
 
 jobs:
   build-windows:
@@ -29,7 +32,8 @@ jobs:
             --version-file=version.txt `
             --name=JavaJiggle gui.py
 
-      - name: Upload EXE to Release
+      - name: Upload EXE to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: dist/JavaJiggle.exe
@@ -52,15 +56,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller -r requirements.txt
 
-      - name: Build macOS App
+      - name: Build macOS .app
         run: |
           pyinstaller --noconfirm --windowed \
             --icon=assets/JavaJiggle_icon.icns \
             --name=JavaJiggle gui.py
 
-      - name: Upload .app to Release
+      - name: Zip the macOS .app
+        run: |
+          cd dist
+          zip -r JavaJiggle-macOS.zip JavaJiggle.app
+
+      - name: Upload .zip to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/JavaJiggle.app
+          files: dist/JavaJiggle-macOS.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
