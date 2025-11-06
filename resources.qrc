@@ -1,7 +1,7 @@
 <RCC>
   <qresource prefix="/">
     <file>assets/JavaJiggle_icon.ico</file>
-    <file>assets/JavaJiggle_Icon.png</file>
+    <file>assets/JavaJiggle_icon.png</file>
     <file>assets/JavaJiggle_icon.icns</file>
   </qresource>
 </RCC>
